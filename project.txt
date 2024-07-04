@@ -1,0 +1,91 @@
+Architecture Diagram :
+-------------------------------------------------------------
+
+
++----------------------------------+
+| Industrial Equipment             |
+|   +------------------------+     |
+|   | Sensors (Vibration,    |     |
+|   | Temperature, etc.)     |     |
+|   +------------------------+     |
+|                  |               |
+|                  v               |
+|   +------------------------+     |
+|   | Edge Gateway           |     |
+|   |   +--------------------+     |
+|   |   | Preprocessing      |     |
+|   |   |   Data Filtering   |     |
+|   |   |   Feature Extraction|    |
+|   |   +--------------------+     |
+|   |             |                |
+|   v             v                |
+|   +------------------------+     |
+|   | IoT Platform           |     |
+|   |   +--------------------+     |
+|   |   | Data Storage       |     |
+|   |   | Real-time Streaming|     |
+|   |   |   (MQTT, Kafka)    |     |
+|   |   +--------------------+     |
+|   |             |                |
+|   v             v                |
+|   +------------------------+     |
+|   | Data Analytics        |     |
+|   |   +--------------------+     |
+|   |   | Predictive Models  |     |
+|   |   |   (Machine Learning)|   |
+|   |   |   Anomaly Detection|    |
+|   |   +--------------------+     |
+|   |             |                |
+|   v             v                |
+|   +------------------------+     |
+|   | Alerting & Monitoring |     |
+|   |   +--------------------+     |
+|   |   | Thresholds         |     |
+|   |   | Notifications      |     |
+|   |   +--------------------+     |
++----------------------------------+
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+
+Explanation of Components:
+1. Industrial Equipment: This represents the machinery or equipment in an industrial setting that needs monitoring and maintenance.
+
+2.  Sensors: Various sensors such as vibration sensors, temperature sensors, pressure sensors, etc., are deployed on the equipment to collect real-time data.
+
+3.  Edge Gateway: Acts as a local processing unit near the equipment. It preprocesses the sensor data by filtering out noise, extracting relevant features, and reducing the amount of data sent to the IoT platform.
+
+4. IoT Platform:
+
+  . Data Storage: Stores the preprocessed sensor data for historical analysis and training of machine learning models.
+  . Real-time Streaming: Uses protocols like MQTT or Kafka to handle real-time data ingestion from edge devices.
+  
+5. Data Analytics:
+
+   . Predictive Models: Machine learning models trained on historical data to predict equipment failures or anomalies.
+   . Anomaly Detection: Algorithms to detect unusual patterns or deviations in sensor data that may indicate potential failures.
+
+
+Alerting & Monitoring:
+
+  . Thresholds: Set thresholds for sensor readings beyond which alerts are triggered.
+  . Notifications: Alerts maintenance staff or operators via email, SMS, or through an interface (like a dashboard) when anomalies or potential failures are detected.
+/////////////////////////////////////////////////////////////////////////////////////////////
+Workflow:
+Data Collection: Sensors continuously collect data on parameters like vibration, temperature, etc., from industrial equipment.
+
+Preprocessing: The Edge Gateway preprocesses this raw sensor data by filtering out noise, extracting features, and formatting it for efficient transmission to the IoT platform.
+
+Data Transmission: Preprocessed data is sent to the IoT platform either in real-time or in batches, depending on the application requirements.
+
+Data Storage and Analysis: The IoT platform stores the data in a database suitable for time-series analysis. Data analytics tools run predictive models and anomaly detection algorithms on this data to identify patterns and potential failures.
+
+Alerting and Monitoring: Alerts are generated when anomalies or potential failures are detected, allowing maintenance teams to take preemptive action before equipment failure occurs.
+///////////////////////////////////////////////////////////////////////////////////////////
+Benefits:
+
+Predictive Maintenance: Reduces downtime and maintenance costs by predicting failures before they happen.
+
+Improved Efficiency: Optimizes equipment performance and operational efficiency by scheduling maintenance based on actual need rather than a fixed schedule.
+
+Data-Driven Insights: Provides insights into equipment behavior and performance over time, enabling better decision-making for maintenance and operations.
