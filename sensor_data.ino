@@ -73,5 +73,5 @@ void loop() {
   client.publish("sensor/temperature", String(t).c_str());
   client.publish("sensor/humidity", String(h).c_str());
 
-  delay(2000); // Wait 2 seconds between readings
+  delay(5000); // Wait 2 seconds between readings
 }
