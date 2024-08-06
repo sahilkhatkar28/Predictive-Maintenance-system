@@ -1,9 +1,30 @@
 #include <WiFi.h>
+#include <Wire.h>
 #include <PubSubClient.h>
 #include <DHT.h>
+#include <ESP32Servo.h> //Servo library
+#include <Adafruit_Sensor.h>  // Adafruit sensor library
+#include <Adafruit_ADXL345_U.h> // ADXL345 library
 
-#define DHTPIN 15      // GPIO pin where the DHT sensor is connected
-#define DHTTYPE DHT22  // DHT 11
+
+/*
+====Pin Connections====
+ESP32     Servo Motor  |   ESP32     ADXL345    |     ESP32     DHT 22     |     ESP32     Ultrasonic
+
+Vcc       Red          |   3v3       vcc        |     vcc       +          |     Vcc       Vcc
+Gnd       Brown        |   Gnd       Gnd        |     Gnd       -          |     Gnd       Gnd
+D15       Orange       |   D21       SDA        |     D18       out        |     D5        Trig
+***       ***          |   D22       SCL        |                          |     D18       Echo
+*/
+
+#define DHTPIN 18       // GPIO pin where the DHT sensor is connected
+#define DHTTYPE DHT22    // DHT 11
+const int trigPin = 5;   //Triger Pin of Ultrasonic Sensor
+const int echoPin = 18;  //Echo Pin of Ultrasonic Sensor
+long duration;
+Servo myservo;  // Creating servo object to control the servo
+const int servoPin = 15; // Servo pin
+Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(); // ADXL345 Object
 
 const char* ssid = "sensor/data";
 const char* password = "12345678";
@@ -18,6 +39,13 @@ void setup() {
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   dht.begin();
+  //Ultrasonic Sensor Pin Configuration
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  myservo.attach(servoPin);
+  if (!accel.begin()) {
+    Serial.println("ADXL345 not detected");
+  }
 }
 
 void setup_wifi() {
@@ -59,19 +87,81 @@ void loop() {
   }
   client.loop();
 
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
+  float temp = dht.readTemperature();
+  float ultra = readUltrasonic();
+  float adxl = readadxl();
 
-  if (isnan(h) || isnan(t)) {
+  if (isnan(temp)) {
     Serial.println("Failed to read from DHT sensor!");
     return;
   }
 
-  String payload = "Temperature: " + String(t) + "°C  Humidity: " + String(h) + "%";
+  
+  String payload = "Temperature: " + String(temp) + "°C" + "Distance: " + String(ultra) + "cm" + "Cordinates: " + String(adxl)  ;
   Serial.println(payload);
 
-  client.publish("sensor/temperature", String(t).c_str());
-  client.publish("sensor/humidity", String(h).c_str());
+  client.publish("diot/temperature", String(temp).c_str());
+  client.publish("diot/ultra", String(ultra).c_str());
+  client.publish("diot/adxl", String(adxl).c_str());
 
   delay(5000); // Wait 2 seconds between readings
 }
+
+
+float readUltrasonic() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+
+  // Convert duration to distance in centimeters
+  return duration * 0.034 / 2;
+
+
+}
+
+float readadxl(){
+  // Sweep from 0 to 180 degrees
+  for (int pos = 0; pos <= 180; pos += 1) {
+    sensors_event_t event;
+    accel.getEvent(&event);
+
+    myservo.write(pos);  // tell servo to go to position in variable 'pos'
+    Serial.print("Servo position: ");
+    Serial.println(pos);
+
+    Serial.print("X: ");
+    Serial.print(event.acceleration.x);
+    Serial.print("  ");
+    Serial.print("Y: ");
+    Serial.print(event.acceleration.y);
+    Serial.print("  ");
+    Serial.print("Z: ");
+    Serial.print(event.acceleration.z);
+    Serial.print("    ");
+    delay(5000);  // waits 5000ms for the servo to reach the position
+  }
+  for (int pos = 180; pos >= 0; pos -= 1) {
+    sensors_event_t event;
+    accel.getEvent(&event);
+    
+    myservo.write(pos);  // tell servo to go to position in variable 'pos'
+    Serial.print("Servo position: ");
+    Serial.println(pos);
+
+    Serial.print("X: ");
+    Serial.print(event.acceleration.x);
+    Serial.print("  ");
+    Serial.print("Y: ");
+    Serial.print(event.acceleration.y);
+    Serial.print("  ");
+    Serial.print("Z: ");
+    Serial.print(event.acceleration.z);
+    Serial.print("    ");
+    delay(5000);  // waits 5000ms for the servo to reach the position
+  }
+
+}
+
