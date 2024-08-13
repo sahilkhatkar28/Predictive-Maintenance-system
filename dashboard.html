@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Data Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5rem;
+            color: #343a40;
+            margin: 20px 0;
+        }
+        .container {
+            width: 90%;
+            margin: auto;
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            max-width: 1200px;
+        }
+        .chart-container {
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.1);
+            height: 100% !important;
+            width: 100% !important;
+        }
+        .error, .alert {
+            color: #dc3545;
+            font-weight: bold;
+            background-color: rgba(220, 53, 69, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .button:hover {
+            opacity: 0.9;
+        }
+        .start-button {
+            background-color: #28a745;
+        }
+        .stop-button {
+            background-color: #dc3545;
+        }
+        .logout {
+            margin-top: 20px;
+        }
+        .logout a {
+            text-decoration: none;
+            color: #ffffff;
+        }
+        .footer-img {
+            width: 40px;
+            height: auto;
+            margin-top: 20px;
+        }
+        .data-link {
+            margin-top: 20px;
+        }
+        .data-link a {
+            text-decoration: none;
+            color: #007bff;
+            font-size: 18px;
+        }
+        .data-link a:hover {
+            color: #0056b3;
+        }
+        .data-link a i {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sensor Data Dashboard</h1>
+
+        <!-- Data Table Link -->
+        <div class="data-link">
+            <a href="{{ url_for('show_data') }}">
+                <i class="fas fa-database"></i> View Sensor Data Table
+            </a>
+        </div>
+
+        <div id="error" class="error"></div>
+        <div id="alert" class="alert"></div>
+
+        <div id="live-data" style="display: flex; flex-wrap: wrap; justify-content: center;">
+            <div class="chart-container">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="vibrationChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="currentChart"></canvas>
+            </div>
+        </div>
+
+        <div class="control-buttons">
+            <button class="button start-button" onclick="controlLED('on')">Turn LED On</button>
+            <button class="button stop-button" onclick="controlLED('off')">Turn LED Off</button>
+        </div>
+
+        <div class="logout">
+            <a href="/logout"><button class="button">Logout</button></a>
+        </div>
+
+        <img src="https://www.example.com/footer-icon.png" alt="Footer Icon" class="footer-img">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let temperatureData = [];
+        let vibrationData = [];
+        let currentData = [];
+        let labels = [];
+
+        const createGradient = (ctx, color1, color2) => {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, color1);
+            gradient.addColorStop(1, color2);
+            return gradient;
+        };
+
+        const temperatureChart = new Chart(document.getElementById('temperatureChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: temperatureData,
+                    borderColor: '#dc3545',
+                    backgroundColor: createGradient(document.getElementById('temperatureChart').getContext('2d'), 'rgba(220, 53, 69, 0.2)', 'rgba(220, 53, 69, 0)'),
+                    borderWidth: 2,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Time', color: '#343a40' },
+                        ticks: { color: '#343a40' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Temperature (°C)', color: '#343a40' },
+                        ticks: { color: '#343a40' }
+                    }
+                }
+            }
+        });
+
+        const vibrationChart = new Chart(document.getElementById('vibrationChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Vibration',
+                    data: vibrationData,
+                    borderColor: '#007bff',
+                    backgroundColor: createGradient(document.getElementById('vibrationChart').getContext('2d'), 'rgba(0, 123, 255, 0.2)', 'rgba(0, 123, 255, 0)'),
+                    borderWidth: 2,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Time', color: '#343a40' },
+                        ticks: { color: '#343a40' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Vibration', color: '#343a40' },
+                        ticks: { color: '#343a40' }
+                    }
+                }
+            }
+        });
+
+        const currentChart = new Chart(document.getElementById('currentChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Current (A)',
+                    data: currentData,
+                    borderColor: '#28a745',
+                    backgroundColor: createGradient(document.getElementById('currentChart').getContext('2d'), 'rgba(40, 167, 69, 0.2)', 'rgba(40, 167, 69, 0)'),
+                    borderWidth: 2,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Time', color: '#343a40' },
+                        ticks: { color: '#343a40' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Current (A)', color: '#343a40' },
+                        ticks: { color: '#343a40' }
+                    }
+                }
+            }
+        });
+
+        async function fetchLiveData() {
+            try {
+                const response = await fetch('/live');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                const timestamp = new Date(data.timestamp).toLocaleTimeString();
+                
+                // Add new data to the arrays
+                labels.push(timestamp);
+                temperatureData.push(data.temperature);
+                vibrationData.push(data.vibration);
+                currentData.push(data.current);
+
+                // Keep only the last 5 entries
+                if (labels.length > 5) {
+                    labels.shift();
+                    temperatureData.shift();
+                    vibrationData.shift();
+                    currentData.shift();
+                }
+
+                temperatureChart.update();
+                vibrationChart.update();
+                currentChart.update();
+
+                document.getElementById('alert').textContent = data.alert || '';
+                document.getElementById('error').textContent = '';
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('error').textContent = 'Error fetching data. Please try again later.';
+            }
+        }
+
+        async function controlLED(state) {
+            try {
+                const response = await fetch(`/led/${state}`, { method: 'POST' });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const result = await response.json();
+                alert(`LED ${state} successful`);
+            } catch (error) {
+                console.error(`Error controlling LED: ${error}`);
+                alert(`Error controlling LED: ${error.message}`);
+            }
+        }
+
+        setInterval(fetchLiveData, 5000);  // Fetch live data every 5 seconds
+        document.addEventListener('DOMContentLoaded', fetchLiveData);
+    </script>
+</body>
+</html>
